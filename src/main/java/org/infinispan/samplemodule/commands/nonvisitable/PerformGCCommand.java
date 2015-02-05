@@ -65,4 +65,9 @@ public class PerformGCCommand implements ReplicableCommand {
       return false;  // TODO: Customise this generated block
    }
 
+   @Override
+   public boolean canBlock() {
+      return true;
+   }
+
 }

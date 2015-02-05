@@ -3,29 +3,20 @@ package org.infinispan.samplemodule;
 import org.infinispan.Cache;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.samplemodule.api.SampleModuleDecorator;
+import org.infinispan.test.MultipleCacheManagersTest;
 import org.testng.annotations.Test;
 
-@Test
-public class SampleUsageTest {
+@Test(groups = "unit", testName = "samples.SampleUsageTest")
+public class SampleUsageTest extends MultipleCacheManagersTest {
 
+   @Test
    public void demonstrateUsage() {
-      ConfigurationBuilder builder = new ConfigurationBuilder();
-      builder.clustering().cacheMode(CacheMode.REPL_SYNC);
+      Cache<String, String> cache1 = cacheManagers.get(0).getCache();
+      Cache<String, String> cache2 = cacheManagers.get(1).getCache();
 
-      EmbeddedCacheManager manager1 = new DefaultCacheManager(
-            GlobalConfigurationBuilder.defaultClusteredBuilder().build(), builder.build());
-      Cache<String, String> cache1 = manager1.getCache();
-
-      EmbeddedCacheManager manager2 = new DefaultCacheManager(
-            GlobalConfigurationBuilder.defaultClusteredBuilder().build(), builder.build());
-      Cache<String, String> cache2 = manager2.getCache();
-
-      SampleModuleDecorator<String, String> moduleApi1 = new SampleModuleDecorator<String, String>(cache1);
-      SampleModuleDecorator<String, String> moduleApi2 = new SampleModuleDecorator<String, String>(cache2);
+      SampleModuleDecorator<String, String> moduleApi1 = new SampleModuleDecorator<>(cache1);
+      SampleModuleDecorator<String, String> moduleApi2 = new SampleModuleDecorator<>(cache2);
 
       cache1.put("1", "test");
       cache1.put("2", "test");
@@ -39,4 +30,11 @@ public class SampleUsageTest {
       moduleApi2.printCacheContents();
    }
 
+   @Override
+   protected void createCacheManagers() throws Throwable {
+      ConfigurationBuilder config = getDefaultClusteredCacheConfig(CacheMode.REPL_SYNC, false);
+      createCluster(config, 2);
+      waitForClusterToForm();
+
+   }
 }

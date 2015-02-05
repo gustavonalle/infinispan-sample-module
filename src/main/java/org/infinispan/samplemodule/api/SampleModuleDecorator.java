@@ -2,6 +2,7 @@ package org.infinispan.samplemodule.api;
 
 import org.infinispan.Cache;
 import org.infinispan.context.InvocationContextContainer;
+import org.infinispan.context.InvocationContextFactory;
 import org.infinispan.factories.ComponentRegistry;
 import org.infinispan.interceptors.InterceptorChain;
 import org.infinispan.samplemodule.CommandInitializer;
@@ -20,7 +21,7 @@ public class SampleModuleDecorator<K, V> {
    private final Cache<K, V> cache;
    private final CommandInitializer commandBuilder;
    private final InterceptorChain invoker;
-   private final InvocationContextContainer invocationContextContainer;
+   private final InvocationContextFactory invocationContextFactory;
 
    public SampleModuleDecorator(Cache<K, V> cache) {
       if (!cache.getStatus().allowInvocations())
@@ -29,8 +30,7 @@ public class SampleModuleDecorator<K, V> {
       ComponentRegistry cr = cache.getAdvancedCache().getComponentRegistry();
       commandBuilder = cr.getComponent(CommandInitializer.class);
       invoker = cr.getComponent(InterceptorChain.class);
-      invocationContextContainer = cr.getComponent(InvocationContextContainer.class);
-
+      invocationContextFactory = cr.getComponent(InvocationContextFactory.class);
       // we may want to attach the interceptor to the cache.
       // alternatively the module may register for lifecycle callbacks for each new cache started up, by implementing
       // org.infinispan.lifecycle.ModuleLifecycle
@@ -57,12 +57,12 @@ public class SampleModuleDecorator<K, V> {
       BulkDeleteCommand c = commandBuilder.buildBulkDeleteCommand(pattern);
       // The number of entries is not limited to 10, but this
       // guarantees a decent size to initialise the context with
-      invoker.invoke(invocationContextContainer.createInvocationContext(true, 10), c);
+      invoker.invoke(invocationContextFactory.createInvocationContext(true, 10), c);
    }
 
    public void printCacheContents() {
       PrintContentsCommand c = commandBuilder.buildPrintContentsCommand();
-      invoker.invoke(invocationContextContainer.createInvocationContext(false, 0), c);
+      invoker.invoke(invocationContextFactory.createInvocationContext(false, 0), c);
    }
 
 }
